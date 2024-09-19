@@ -73,7 +73,7 @@ export class TextureService {
           const timestamp = Date.now();
           const optionValue = `uploaded-texture-${timestamp}`;
 
-          texture.userData.textureName = optionValue;
+          texture.userData['textureName'] = optionValue;
           this.applyTexture(texture, this.modelService.getSelectedObject());
 
           this.uploadedTextures[optionValue] = texture;

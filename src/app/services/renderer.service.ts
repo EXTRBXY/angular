@@ -4,6 +4,7 @@ import { ModelService } from './model.service';
 import { EnvironmentService } from './environment.service';
 import { TextureService } from './texture.service';
 import { TabsService } from './tabs.service';
+import * as THREE from 'three';
 
 @Injectable({
   providedIn: 'root',
@@ -25,7 +26,7 @@ export class RendererService {
 
     // Экспорт функции переключения модели
     (window as any).switchModel = (index: number) =>
-      this.modelService.switchModel(index);
+      this.modelService['switchModel'](index);
 
     // Запуск анимации
     this.animate();

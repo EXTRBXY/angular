@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RendererService } from '../old/renderer.service';
+import { RendererService } from './services/renderer.service';
 
 @Component({
   selector: 'app-root',

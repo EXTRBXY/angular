@@ -553,7 +553,7 @@ export class ModelService {
           <div class="mesh-name">Мэш: ${child.name || 'Без имени'}</div>
           <div class="mesh-dimensions">Габариты: ${meshDimensions}</div>
         `;
-        listItem.dataset.uuid = child.uuid;
+        listItem.dataset['uuid'] = child.uuid;
         listItem.prepend(visibilityToggle);
 
         // Добавляем обработчик клика для выделения мэша
@@ -580,7 +580,7 @@ export class ModelService {
     Array.from(meshList.children).forEach((li) => {
       if (li instanceof HTMLLIElement) {
         li.classList.remove('selected');
-        if (li.dataset.uuid === mesh.uuid) {
+        if (li.dataset['uuid'] === mesh.uuid) {
           li.classList.add('selected');
         }
       }
@@ -592,9 +592,9 @@ export class ModelService {
   }
 
   // Экспортируемые функции и переменные
-  async loadModel(file: File): Promise<void> {
-    return this.loadModel(file);
-  }
+  // async loadModel(file: File): Promise<void> {
+  //   return this.loadModel(file);
+  // }
 
   getModels(): THREE.Group[] {
     return this.models;

@@ -56,8 +56,8 @@ export class TabsService {
 
     this.activeTabIndex = index;
     this.renderTabs();
-    this.modelService.switchModel(index);
-    this.modelService.updateInfo();
+    this.modelService['switchModel'](index);
+    this.modelService['updateInfo']();
   }
 
   getActiveTabIndex(): number {
