@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="utf-8" />
+		<title>FBX Viewer</title>
+		<link rel="stylesheet" href="/src/index.css" />
+	</head>
+	<body>
+		<div id="model-tabs">
+			<div id="tabs-container"></div>
+		</div>
+
+		<aside id="gui-container">
+			<div class="gui-group">
+				<div id="theme-switch">
+					<div class="toggle-thumb"></div>
+				</div>
+			</div>
+
+			<nav class="gui-group">
+				<label for="texture-select" style="font-weight: bold;">Текстура</label>
+				<select id="texture-select" aria-label="Выбор текстуры">
+					<option value="default">default</option>
+					<option value="concrete_color">concrete_color</option>
+					<option value="concrete_rough">concrete_rough</option>
+					<option value="granite1_color">granite1_color</option>
+					<option value="granite2_color">granite2_color</option>
+					<option value="granite3_color">granite3_color</option>
+					<option value="granite4_color">granite4_color</option>
+					<option value="granite5_color">granite5_color</option>
+					<option value="granite6_color">granite6_color</option>
+					<option value="granite7_color">granite7_color</option>
+					<option value="granite8_color">granite8_color</option>
+					<option value="marblerough_color">marblerough_color</option>
+					<option value="mramor_koelga_color">mramor_koelga_color</option>
+				</select>
+			</nav>
+
+			<nav class="gui-group">
+				<label for="hdri-select" style="font-weight: bold;">Окружающая среда</label>
+				<select id="hdri-select" aria-label="Выбор HDRI">
+					<option value="none">none</option>
+					<option value="blouberg_sunrise_2_1k.hdr">blouberg_sunrise_2_1k.hdr</option>
+					<option value="moonless_golf_1k.hdr">moonless_golf_1k.hdr</option>
+					<option value="pedestrian_overpass_1k.hdr">pedestrian_overpass_1k.hdr</option>
+					<option value="quarry_01_1k.hdr">quarry_01_1k.hdr</option>
+					<option value="royal_esplanade_1k.hdr">royal_esplanade_1k.hdr</option>
+					<option value="san_giuseppe_bridge_2k.hdr">san_giuseppe_bridge_2k.hdr</option>
+					<option value="spot1Lux.hdr">spot1Lux.hdr</option>
+					<option value="venice_sunset_1k.hdr">venice_sunset_1k.hdr</option>
+				</select>
+			</nav>
+
+			<div class="gui-group">
+				<button id="upload-model-btn" aria-label="Загрузить модель">Загрузите модель</button>
+				<input type="file" id="model-upload" accept=".fbx" aria-hidden="true" />
+			</div>
+
+			<div class="gui-group">
+				<button id="upload-texture-btn" aria-label="Загрузить текстуру">Загрузите текстуру</button>
+				<input type="file" id="texture-upload" accept="image/*" aria-hidden="true" />
+			</div>
+
+			<div class="gui-group">
+				<label for="tiling-slider" style="font-weight: bold;">Тайлинг</label>
+				<div class="slider-container">
+					<input type="range" id="tiling-slider" min="1" max="10" value="1" aria-label="Изменить тайлинг" />
+					<span id="tiling-value" aria-label="Значение тайлинга">1</span>
+				</div>
+			</div>
+
+			<section class="gui-group">
+				<label for="info-name" style="font-weight: bold;">Имя</label>
+				<input type="text" id="info-name" readonly aria-label="Имя модели" />
+
+				<label for="info-dimensions" style="font-weight: bold;">Габариты</label>
+				<input type="text" id="info-dimensions" readonly aria-label="Габариты модели" />
+			</section>
+
+			<section class="gui-group">
+				<label style="font-weight: bold;">Мэши модели</label>
+				<ul id="mesh-list"></ul>
+			</section>
+		</aside>
+
+		<div id="loading-bar" style="display: none" aria-hidden="true">
+			<svg viewBox="0 0 100 100">
+				<circle cx="50" cy="50" r="40" fill="none" stroke="#e0e0e0" stroke-width="10" />
+				<circle
+					cx="50"
+					cy="50"
+					r="40"
+					fill="none"
+					stroke="#4a90e2"
+					stroke-width="10"
+					stroke-dasharray="251.33"
+					stroke-dashoffset="251.33"
+					id="loading-bar-progress" />
+			</svg>
+			<div id="loading-bar-text">0%</div>
+		</div>
+		<script type="module" src="/src/renderer"></script>
+	</body>
+</html>
