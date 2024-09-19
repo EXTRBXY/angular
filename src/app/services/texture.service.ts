@@ -201,7 +201,7 @@ export class TextureService {
 
         this.componentTextures.set(
           child.uuid,
-          texture.userData.textureName || ''
+          texture.userData["textureName"] || ''
         );
 
         const tiling = this.getObjectTiling(child);
