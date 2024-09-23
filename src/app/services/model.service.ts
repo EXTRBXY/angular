@@ -274,7 +274,9 @@ export class ModelService {
           this.currentModelIndex = this.models.length - 1;
           this.sceneService.scene.add(model);
 
-          this.tabsService.createTab(this.modelFileName);
+          this.tabsService.createTab(this.modelFileName, (index: number) =>
+            this.switchModel(index)
+          );
 
           this.updateInfo();
           this.sceneService.controls.update();
@@ -296,7 +298,10 @@ export class ModelService {
             'texture-select'
           ) as HTMLSelectElement;
           textureSelect.value = 'default';
-          this.textureService.updateTexture('default');
+          this.textureService.updateTexture(
+            'default',
+            this.getSelectedObject()
+          );
 
           const tilingSlider = document.getElementById(
             'tiling-slider'
@@ -478,7 +483,7 @@ export class ModelService {
     }
   }
 
-  private switchModel(index: number): void {
+  public switchModel(index: number): void {
     if (index >= 0 && index < this.models.length) {
       if (this.models[this.currentModelIndex]) {
         this.sceneService.scene.remove(this.models[this.currentModelIndex]);
@@ -520,6 +525,9 @@ export class ModelService {
 
       // Обновление списка мэшей для новой модели
       this.updateMeshList(this.models[this.currentModelIndex]);
+
+      // Применение текстуры к новой модели
+      this.textureService.updateTexture('default', this.getSelectedObject());
     }
   }
 
@@ -588,13 +596,14 @@ export class ModelService {
 
     // Выделение мэша в сцене
     this.sceneService.outlinePass.selectedObjects = [mesh];
-    // this.sceneService.render();
+
+    // Применение текущей текстуры к выделенному мэшу
+    const currentTextureName =
+      this.textureService.componentTextures.get(mesh.uuid) || 'default';
+    this.textureService.updateTexture(currentTextureName, mesh);
   }
 
   // Экспортируемые функции и переменные
-  // async loadModel(file: File): Promise<void> {
-  //   return this.loadModel(file);
-  // }
 
   getModels(): THREE.Group[] {
     return this.models;

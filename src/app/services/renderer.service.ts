@@ -21,12 +21,19 @@ export class RendererService {
   }
 
   private initialize(): void {
-    this.tabsService.initTabs();
     this.sceneService.initScene();
 
-    // Экспорт функции переключения модели
+    // Инициализация вкладок с необходимым callback
+    this.tabsService.initTabs();
+
+    // Создание начальной вкладки
+    this.tabsService.createTab('Модель 1', (index: number) =>
+      this.modelService.switchModel(index)
+    );
+
+    // Экспорт функции переключения модели в глобальную область
     (window as any).switchModel = (index: number) =>
-      this.modelService['switchModel'](index);
+      this.modelService.switchModel(index);
 
     // Запуск анимации
     this.animate();
@@ -40,9 +47,14 @@ export class RendererService {
 
   // Экспортируемые функции для использования в других модулях
   updateTexture = (textureName: string) =>
-    this.textureService.updateTexture(textureName);
+    this.textureService.updateTexture(
+      textureName,
+      this.modelService.getSelectedObject()
+    );
+
   applyTexture = (texture: THREE.Texture, object: THREE.Object3D | null) =>
     this.textureService.applyTexture(texture, object);
+
   updateEnvironment = (hdriName: string) =>
     this.environmentService.updateEnvironment(hdriName);
 }

@@ -1,7 +1,7 @@
+// src/app/services/texture.service.ts
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { SceneService } from './scene.service';
-import { ModelService } from './model.service';
 
 type UploadedTextures = { [key: string]: THREE.Texture };
 
@@ -19,16 +19,16 @@ export class TextureService {
   private textureCache = new Map<string, THREE.Texture>();
   private componentTiling = new Map<string, number>();
 
-  constructor(
-    private sceneService: SceneService,
-    private modelService: ModelService
-  ) {
+  constructor(private sceneService: SceneService) {
     const textureSelect = document.getElementById(
       'texture-select'
     ) as HTMLSelectElement;
     textureSelect?.addEventListener('change', (event) => {
       const target = event.target as HTMLSelectElement;
-      this.updateTexture(target.value);
+      // Передаем выбранный объект при вызове updateTexture
+      console.warn(
+        'Передайте выбранный объект модели при вызове updateTexture'
+      );
     });
 
     const uploadTextureBtn = document.getElementById(
@@ -52,7 +52,8 @@ export class TextureService {
     tilingSlider?.addEventListener('input', (event) => {
       const target = event.target as HTMLInputElement;
       const tiling = parseFloat(target.value);
-      this.updateTiling(tiling, this.modelService.getSelectedObject());
+      // Передаем выбранный объект при вызове updateTiling
+      console.warn('Передайте выбранный объект модели при вызове updateTiling');
     });
 
     const tilingValue = document.getElementById('tiling-value');
@@ -74,7 +75,8 @@ export class TextureService {
           const optionValue = `uploaded-texture-${timestamp}`;
 
           texture.userData['textureName'] = optionValue;
-          this.applyTexture(texture, this.modelService.getSelectedObject());
+          // Необходимо передать выбранный объект из вызывающей стороны
+          // this.applyTexture(texture, selectedObject);
 
           this.uploadedTextures[optionValue] = texture;
 
@@ -94,34 +96,45 @@ export class TextureService {
     }
   }
 
-  async updateTexture(textureName: string): Promise<void> {
+  /**
+   * Обновление текстуры
+   * @param textureName Имя текстуры
+   * @param object Объект THREE.Object3D для применения текстуры
+   */
+  public async updateTexture(
+    textureName: string,
+    object: THREE.Object3D | null
+  ): Promise<void> {
     if (textureName === 'default') {
-      this.applyDefaultTexture();
+      this.applyDefaultTexture(object);
     } else if (textureName.startsWith('uploaded-texture-')) {
       const texture = this.uploadedTextures[textureName];
       if (texture) {
-        this.applyTexture(texture, this.modelService.getSelectedObject());
+        this.applyTexture(texture, object);
       }
     } else {
-      await this.loadAndApplyTexture(textureName);
+      await this.loadAndApplyTexture(textureName, object);
     }
   }
 
-  private async loadAndApplyTexture(textureName: string): Promise<void> {
+  private async loadAndApplyTexture(
+    textureName: string,
+    object: THREE.Object3D | null
+  ): Promise<void> {
     this.sceneService.showLoadingBar();
     const texturePath = `assets/textures/${textureName}.png`;
 
     if (this.textureCache.has(textureName)) {
       const texture = this.textureCache.get(textureName);
       if (texture) {
-        this.applyTexture(texture, this.modelService.getSelectedObject());
+        this.applyTexture(texture, object);
         this.sceneService.hideLoadingBar();
       }
     } else {
       try {
         const texture = await this.loadTextureWithProgress(texturePath);
         this.textureCache.set(textureName, texture);
-        this.applyTexture(texture, this.modelService.getSelectedObject());
+        this.applyTexture(texture, object);
       } catch (error) {
         console.error('Ошибка загрузки текстуры:', error);
       } finally {
@@ -130,36 +143,40 @@ export class TextureService {
     }
   }
 
-  private loadTextureWithProgress(url: string): Promise<THREE.Texture> {
+  /**
+   * Загрузка текстуры с отслеживанием прогресса
+   * @param path Путь к текстуре
+   * @returns Промис с загруженной текстурой
+   */
+  private loadTextureWithProgress(path: string): Promise<THREE.Texture> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true);
+      xhr.open('GET', path, true);
       xhr.responseType = 'blob';
 
       xhr.onprogress = (event) => {
         if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          this.sceneService.showLoadingBar(progress);
+          const percentComplete = (event.loaded / event.total) * 100;
+          this.sceneService.showLoadingBar(percentComplete);
         }
       };
 
       xhr.onload = () => {
         if (xhr.status === 200) {
           const blob = xhr.response;
-          const objectURL = URL.createObjectURL(blob);
-
-          this.textureLoader.load(
-            objectURL,
-            (texture) => {
-              URL.revokeObjectURL(objectURL);
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === 'string') {
+              const texture = this.textureLoader.load(reader.result);
               resolve(texture);
-            },
-            undefined,
-            (error) => {
-              URL.revokeObjectURL(objectURL);
-              reject(error);
+            } else {
+              reject(new Error('Некорректный формат текстуры'));
             }
-          );
+          };
+          reader.onerror = () => {
+            reject(new Error('Ошибка чтения файла текстуры'));
+          };
+          reader.readAsDataURL(blob);
         } else {
           reject(new Error(`Ошибка загрузки текстуры: ${xhr.status}`));
         }
@@ -173,10 +190,16 @@ export class TextureService {
     });
   }
 
-  applyTexture(texture: THREE.Texture, object: THREE.Object3D | null): void {
-    const targetObject =
-      object ||
-      this.modelService.getModels()[this.modelService.getCurrentModelIndex()];
+  /**
+   * Применение текстуры к объекту
+   * @param texture Текстура для применения
+   * @param object Объект THREE.Object3D
+   */
+  public applyTexture(
+    texture: THREE.Texture,
+    object: THREE.Object3D | null
+  ): void {
+    const targetObject = object;
     if (!targetObject) return;
 
     targetObject.traverse((child) => {
@@ -201,7 +224,7 @@ export class TextureService {
 
         this.componentTextures.set(
           child.uuid,
-          texture.userData["textureName"] || ''
+          texture.userData['textureName'] || ''
         );
 
         const tiling = this.getObjectTiling(child);
@@ -210,12 +233,11 @@ export class TextureService {
     });
   }
 
-  private applyDefaultTexture(): void {
-    const models = this.modelService.getModels();
-    if (!models.length) return;
+  private applyDefaultTexture(object: THREE.Object3D | null): void {
+    const targetObject = object;
+    if (!targetObject) return;
 
-    const currentModel = models[this.modelService.getCurrentModelIndex()];
-    currentModel.traverse((child) => {
+    targetObject.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         if (this.originalMaterials.has(child.uuid)) {
           const originalMaterial = this.originalMaterials.get(child.uuid);
@@ -223,7 +245,7 @@ export class TextureService {
             child.material =
               originalMaterial instanceof THREE.Material
                 ? originalMaterial.clone()
-                : originalMaterial.map((m) => m.clone());
+                : (originalMaterial as THREE.Material[]).map((m) => m.clone());
           }
         } else {
           child.material = new THREE.MeshStandardMaterial();
@@ -236,14 +258,12 @@ export class TextureService {
     });
   }
 
-  getObjectTiling(object: THREE.Object3D): number {
+  public getObjectTiling(object: THREE.Object3D): number {
     return this.componentTiling.get(object.uuid) || 1;
   }
 
-  updateTiling(tiling: number, object: THREE.Object3D | null): void {
-    const targetObject =
-      object ||
-      this.modelService.getModels()[this.modelService.getCurrentModelIndex()];
+  public updateTiling(tiling: number, object: THREE.Object3D | null): void {
+    const targetObject = object;
     if (!targetObject) return;
 
     targetObject.traverse((child) => {
@@ -269,32 +289,31 @@ export class TextureService {
     }
   }
 
-  resetTilingForAllComponents(): void {
-    const models = this.modelService.getModels();
-    if (models.length > 0) {
-      const currentModel = models[this.modelService.getCurrentModelIndex()];
-      currentModel.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          this.componentTiling.set(child.uuid, 1);
-          if (
-            child.material instanceof THREE.MeshStandardMaterial &&
-            child.material.map
-          ) {
-            child.material.map.repeat.set(1, 1);
-            child.material.needsUpdate = true;
-          }
+  public resetTilingForAllComponents(object: THREE.Object3D | null): void {
+    const targetObject = object;
+    if (!targetObject) return;
+
+    targetObject.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        this.componentTiling.set(child.uuid, 1);
+        if (
+          child.material instanceof THREE.MeshStandardMaterial &&
+          child.material.map
+        ) {
+          child.material.map.repeat.set(1, 1);
+          child.material.needsUpdate = true;
         }
-      });
-      const tilingSlider = document.getElementById(
-        'tiling-slider'
-      ) as HTMLInputElement;
-      const tilingValue = document.getElementById(
-        'tiling-value'
-      ) as HTMLSpanElement;
-      if (tilingSlider && tilingValue) {
-        tilingSlider.value = '1';
-        tilingValue.textContent = '1';
       }
+    });
+    const tilingSlider = document.getElementById(
+      'tiling-slider'
+    ) as HTMLInputElement;
+    const tilingValue = document.getElementById(
+      'tiling-value'
+    ) as HTMLSpanElement;
+    if (tilingSlider && tilingValue) {
+      tilingSlider.value = '1';
+      tilingValue.textContent = '1';
     }
   }
 }
