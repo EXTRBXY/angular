@@ -1,7 +1,9 @@
+// src/app/services/texture.service.ts
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { SceneService } from './scene.service';
-import { ModelService } from './model.service';
+import { AppStateService } from './app-state.service';
+import { take } from 'rxjs/operators';
 
 type UploadedTextures = { [key: string]: THREE.Texture };
 
@@ -21,7 +23,7 @@ export class TextureService {
 
   constructor(
     private sceneService: SceneService,
-    private modelService: ModelService
+    private appStateService: AppStateService
   ) {
     const textureSelect = document.getElementById(
       'texture-select'
@@ -52,13 +54,18 @@ export class TextureService {
     tilingSlider?.addEventListener('input', (event) => {
       const target = event.target as HTMLInputElement;
       const tiling = parseFloat(target.value);
-      this.updateTiling(tiling, this.modelService.getSelectedObject());
+      this.updateTiling(tiling);
     });
 
     const tilingValue = document.getElementById('tiling-value');
     if (tilingValue) {
       tilingValue.textContent = '1';
     }
+
+    // Подписка на изменения выбранного объекта
+    this.appStateService.selectedObject$.subscribe((mesh) => {
+      this.applyTextureToSelected(mesh);
+    });
   }
 
   private onTextureUpload(event: Event): void {
@@ -74,7 +81,7 @@ export class TextureService {
           const optionValue = `uploaded-texture-${timestamp}`;
 
           texture.userData['textureName'] = optionValue;
-          this.applyTexture(texture, this.modelService.getSelectedObject());
+          this.applyTexture(texture);
 
           this.uploadedTextures[optionValue] = texture;
 
@@ -100,7 +107,7 @@ export class TextureService {
     } else if (textureName.startsWith('uploaded-texture-')) {
       const texture = this.uploadedTextures[textureName];
       if (texture) {
-        this.applyTexture(texture, this.modelService.getSelectedObject());
+        this.applyTexture(texture);
       }
     } else {
       await this.loadAndApplyTexture(textureName);
@@ -114,14 +121,14 @@ export class TextureService {
     if (this.textureCache.has(textureName)) {
       const texture = this.textureCache.get(textureName);
       if (texture) {
-        this.applyTexture(texture, this.modelService.getSelectedObject());
+        this.applyTexture(texture);
         this.sceneService.hideLoadingBar();
       }
     } else {
       try {
         const texture = await this.loadTextureWithProgress(texturePath);
         this.textureCache.set(textureName, texture);
-        this.applyTexture(texture, this.modelService.getSelectedObject());
+        this.applyTexture(texture);
       } catch (error) {
         console.error('Ошибка загрузки текстуры:', error);
       } finally {
@@ -173,128 +180,149 @@ export class TextureService {
     });
   }
 
-  applyTexture(texture: THREE.Texture, object: THREE.Object3D | null): void {
-    const targetObject =
-      object ||
-      this.modelService.getModels()[this.modelService.getCurrentModelIndex()];
-    if (!targetObject) return;
+  applyTexture(texture: THREE.Texture): void {
+    this.appStateService.selectedObject$
+      .pipe(take(1))
+      .subscribe((selectedObject) => {
+        if (!selectedObject) return;
 
-    targetObject.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (!this.originalMaterials.has(child.uuid)) {
-          this.originalMaterials.set(child.uuid, child.material);
-        }
-
-        if (Array.isArray(child.material)) {
-          child.material.forEach((material) => {
-            if (material instanceof THREE.MeshStandardMaterial) {
-              material.map = texture.clone();
-              material.map.needsUpdate = true;
-              material.needsUpdate = true;
+        selectedObject.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (!this.originalMaterials.has(child.uuid)) {
+              this.originalMaterials.set(child.uuid, child.material);
             }
-          });
-        } else if (child.material instanceof THREE.MeshStandardMaterial) {
-          child.material.map = texture.clone();
-          child.material.map.needsUpdate = true;
-          child.material.needsUpdate = true;
-        }
 
-        this.componentTextures.set(
-          child.uuid,
-          texture.userData["textureName"] || ''
-        );
+            if (Array.isArray(child.material)) {
+              child.material.forEach((material) => {
+                if (material instanceof THREE.MeshStandardMaterial) {
+                  material.map = texture.clone();
+                  material.map.needsUpdate = true;
+                  material.needsUpdate = true;
+                }
+              });
+            } else if (child.material instanceof THREE.MeshStandardMaterial) {
+              child.material.map = texture.clone();
+              child.material.map.needsUpdate = true;
+              child.material.needsUpdate = true;
+            }
 
-        const tiling = this.getObjectTiling(child);
-        this.updateTiling(tiling, child);
-      }
-    });
+            this.componentTextures.set(
+              child.uuid,
+              texture.userData['textureName'] || ''
+            );
+
+            const tiling = this.getObjectTiling(child);
+            this.updateTiling(tiling, child);
+          }
+        });
+      });
+  }
+
+  applyTextureToSelected(mesh: THREE.Mesh | null): void {
+    if (mesh) {
+      this.applyTextureToMesh(mesh);
+    } else {
+      this.applyDefaultTexture();
+    }
+  }
+
+  private applyTextureToMesh(mesh: THREE.Mesh): void {
+    const textureName = this.componentTextures.get(mesh.uuid) || 'default';
+    this.updateTexture(textureName);
   }
 
   private applyDefaultTexture(): void {
-    const models = this.modelService.getModels();
-    if (!models.length) return;
+    this.appStateService.selectedObject$
+      .pipe(take(1))
+      .subscribe((selectedObject) => {
+        if (!selectedObject) return;
 
-    const currentModel = models[this.modelService.getCurrentModelIndex()];
-    currentModel.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (this.originalMaterials.has(child.uuid)) {
-          const originalMaterial = this.originalMaterials.get(child.uuid);
-          if (originalMaterial) {
-            child.material =
-              originalMaterial instanceof THREE.Material
-                ? originalMaterial.clone()
-                : originalMaterial.map((m) => m.clone());
+        selectedObject.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (this.originalMaterials.has(child.uuid)) {
+              const originalMaterial = this.originalMaterials.get(child.uuid);
+              if (originalMaterial) {
+                child.material =
+                  originalMaterial instanceof THREE.Material
+                    ? originalMaterial.clone()
+                    : originalMaterial.map((m) => m.clone());
+              }
+            } else {
+              child.material = new THREE.MeshStandardMaterial();
+            }
+            this.componentTextures.delete(child.uuid);
           }
-        } else {
-          child.material = new THREE.MeshStandardMaterial();
-        }
-        this.componentTextures.delete(child.uuid);
-      }
-      if (child instanceof THREE.Mesh && child.material) {
-        child.material.needsUpdate = true;
-      }
-    });
+          if (child instanceof THREE.Mesh && child.material) {
+            child.material.needsUpdate = true;
+          }
+        });
+      });
   }
 
   getObjectTiling(object: THREE.Object3D): number {
     return this.componentTiling.get(object.uuid) || 1;
   }
 
-  updateTiling(tiling: number, object: THREE.Object3D | null): void {
-    const targetObject =
-      object ||
-      this.modelService.getModels()[this.modelService.getCurrentModelIndex()];
-    if (!targetObject) return;
+  updateTiling(tiling: number, object: THREE.Object3D | null = null): void {
+    this.appStateService.selectedObject$
+      .pipe(take(1))
+      .subscribe((selectedObject) => {
+        if (!selectedObject) return;
 
-    targetObject.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        this.componentTiling.set(child.uuid, tiling);
-        if (
-          child.material instanceof THREE.MeshStandardMaterial &&
-          child.material.map
-        ) {
-          child.material.map.repeat.set(tiling, tiling);
-          child.material.map.wrapS = THREE.RepeatWrapping;
-          child.material.map.wrapT = THREE.RepeatWrapping;
-          child.material.needsUpdate = true;
+        selectedObject.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            this.componentTiling.set(child.uuid, tiling);
+            if (
+              child.material instanceof THREE.MeshStandardMaterial &&
+              child.material.map
+            ) {
+              child.material.map.repeat.set(tiling, tiling);
+              child.material.map.wrapS = THREE.RepeatWrapping;
+              child.material.map.wrapT = THREE.RepeatWrapping;
+              child.material.needsUpdate = true;
+            }
+          }
+        });
+
+        const tilingValue = document.getElementById(
+          'tiling-value'
+        ) as HTMLSpanElement;
+        if (tilingValue) {
+          tilingValue.textContent = tiling.toString();
         }
-      }
-    });
-
-    const tilingValue = document.getElementById(
-      'tiling-value'
-    ) as HTMLSpanElement;
-    if (tilingValue) {
-      tilingValue.textContent = tiling.toString();
-    }
+      });
   }
 
   resetTilingForAllComponents(): void {
-    const models = this.modelService.getModels();
-    if (models.length > 0) {
-      const currentModel = models[this.modelService.getCurrentModelIndex()];
-      currentModel.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          this.componentTiling.set(child.uuid, 1);
-          if (
-            child.material instanceof THREE.MeshStandardMaterial &&
-            child.material.map
-          ) {
-            child.material.map.repeat.set(1, 1);
-            child.material.needsUpdate = true;
+    this.appStateService.selectedObject$
+      .pipe(take(1))
+      .subscribe((selectedObject) => {
+        if (!selectedObject) return;
+
+        selectedObject.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            this.componentTiling.set(child.uuid, 1);
+            if (
+              child.material instanceof THREE.MeshStandardMaterial &&
+              child.material.map
+            ) {
+              child.material.map.repeat.set(1, 1);
+              child.material.map.wrapS = THREE.RepeatWrapping;
+              child.material.map.wrapT = THREE.RepeatWrapping;
+              child.material.needsUpdate = true;
+            }
           }
+        });
+        const tilingSlider = document.getElementById(
+          'tiling-slider'
+        ) as HTMLInputElement;
+        const tilingValue = document.getElementById(
+          'tiling-value'
+        ) as HTMLSpanElement;
+        if (tilingSlider && tilingValue) {
+          tilingSlider.value = '1';
+          tilingValue.textContent = '1';
         }
       });
-      const tilingSlider = document.getElementById(
-        'tiling-slider'
-      ) as HTMLInputElement;
-      const tilingValue = document.getElementById(
-        'tiling-value'
-      ) as HTMLSpanElement;
-      if (tilingSlider && tilingValue) {
-        tilingSlider.value = '1';
-        tilingValue.textContent = '1';
-      }
-    }
   }
 }

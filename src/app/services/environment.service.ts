@@ -1,3 +1,5 @@
+// src/app/services/environment.service.ts
+
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
@@ -10,15 +12,7 @@ export class EnvironmentService {
   // Кэш для HDRI
   private hdriCache = new Map<string, THREE.Texture>();
 
-  constructor(private sceneService: SceneService) {
-    const hdriSelect = document.getElementById(
-      'hdri-select'
-    ) as HTMLSelectElement;
-    hdriSelect?.addEventListener('change', (event) => {
-      const target = event.target as HTMLSelectElement;
-      this.updateEnvironment(target.value);
-    });
-  }
+  constructor(private sceneService: SceneService) {}
 
   // Асинхронная функция обновления окружения
   async updateEnvironment(hdriName: string): Promise<void> {

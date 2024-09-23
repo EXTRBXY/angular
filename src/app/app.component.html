@@ -50,25 +50,35 @@
   </nav>
 
   <div class="gui-group">
-    <button id="upload-model-btn" aria-label="Загрузить модель">
+    <!-- Кнопка загрузки модели -->
+    <button (click)="triggerModelUpload()" aria-label="Загрузить модель">
       Загрузите модель
     </button>
-    <input type="file" id="model-upload" accept=".fbx" aria-hidden="true" />
+    <input
+      type="file"
+      id="model-upload"
+      accept=".fbx"
+      hidden
+      (change)="onModelUpload($event)"
+    />
   </div>
 
   <div class="gui-group">
-    <button id="upload-texture-btn" aria-label="Загрузить текстуру">
+    <!-- Кнопка загрузки текстуры -->
+    <button (click)="triggerTextureUpload()" aria-label="Загрузить текстуру">
       Загрузите текстуру
     </button>
     <input
       type="file"
       id="texture-upload"
       accept="image/*"
-      aria-hidden="true"
+      hidden
+      (change)="onTextureUpload($event)"
     />
   </div>
 
   <div class="gui-group">
+    <!-- Слайдер тайлинга -->
     <label for="tiling-slider" style="font-weight: bold">Тайлинг</label>
     <div class="slider-container">
       <input
@@ -78,14 +88,24 @@
         max="10"
         value="1"
         aria-label="Изменить тайлинг"
+        (input)="onTilingChange($event)"
       />
-      <span id="tiling-value" aria-label="Значение тайлинга">1</span>
+      <span id="tiling-value" aria-label="Значение тайлинга">{{
+        tilingValue
+      }}</span>
     </div>
   </div>
 
   <section class="gui-group">
+    <!-- Информация о модели -->
     <label for="info-name" style="font-weight: bold">Имя</label>
-    <input type="text" id="info-name" readonly aria-label="Имя модели" />
+    <input
+      type="text"
+      id="info-name"
+      readonly
+      aria-label="Имя модели"
+      [value]="infoName"
+    />
 
     <label for="info-dimensions" style="font-weight: bold">Габариты</label>
     <input
@@ -93,36 +113,14 @@
       id="info-dimensions"
       readonly
       aria-label="Габариты модели"
+      [value]="infoDimensions"
     />
   </section>
 
-  <section class="gui-group">
-    <label style="font-weight: bold">Мэши модели</label>
-    <ul id="mesh-list"></ul>
-  </section>
+  <!-- Переключатель темы -->
+  <div class="gui-group">
+    <button (click)="toggleTheme()" aria-label="Переключить тему">
+      Переключить тему
+    </button>
+  </div>
 </aside>
-
-<div id="loading-bar" style="display: none" aria-hidden="true">
-  <svg viewBox="0 0 100 100">
-    <circle
-      cx="50"
-      cy="50"
-      r="40"
-      fill="none"
-      stroke="#e0e0e0"
-      stroke-width="10"
-    />
-    <circle
-      cx="50"
-      cy="50"
-      r="40"
-      fill="none"
-      stroke="#4a90e2"
-      stroke-width="10"
-      stroke-dasharray="251.33"
-      stroke-dashoffset="251.33"
-      id="loading-bar-progress"
-    />
-  </svg>
-  <div id="loading-bar-text">0%</div>
-</div>

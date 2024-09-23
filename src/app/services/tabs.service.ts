@@ -1,5 +1,6 @@
+// src/app/services/tabs.service.ts
 import { Injectable } from '@angular/core';
-import { ModelService } from './model.service';
+import { AppStateService } from './app-state.service';
 
 interface Tab {
   id: string;
@@ -13,7 +14,7 @@ export class TabsService {
   public tabs: Tab[] = [];
   public activeTabIndex = 0;
 
-  constructor(private modelService: ModelService) {
+  constructor(private appStateService: AppStateService) {
     const tabsContainer = document.getElementById(
       'tabs-container'
     ) as HTMLElement;
@@ -56,19 +57,15 @@ export class TabsService {
 
     this.activeTabIndex = index;
     this.renderTabs();
-    this.modelService['switchModel'](index);
-    this.modelService['updateInfo']();
-  }
 
-  getActiveTabIndex(): number {
-    return this.activeTabIndex;
+    // Уведомляем AppStateService о смене модели
+    this.appStateService.setCurrentModelIndex(index);
   }
 
   removeTab(index: number): void {
     if (index < 0 || index >= this.tabs.length) return;
 
-    this.modelService.removeModel(index);
-
+    this.appStateService.setCurrentModelIndex(null); // Можно установить как null или другой подходящий индекс
     this.tabs.splice(index, 1);
     if (this.activeTabIndex >= this.tabs.length) {
       this.activeTabIndex = Math.max(0, this.tabs.length - 1);
