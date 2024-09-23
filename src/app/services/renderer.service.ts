@@ -26,11 +26,6 @@ export class RendererService {
     // Инициализация вкладок с необходимым callback
     this.tabsService.initTabs();
 
-    // Создание начальной вкладки
-    this.tabsService.createTab('Модель 1', (index: number) =>
-      this.modelService.switchModel(index)
-    );
-
     // Экспорт функции переключения модели в глобальную область
     (window as any).switchModel = (index: number) =>
       this.modelService.switchModel(index);
