@@ -4,8 +4,8 @@
 
 <aside id="gui-container">
   <div class="gui-group">
-    <div id="theme-switch">
-      <div class="toggle-thumb"></div>
+    <div id="theme-switch" (click)="toggleTheme()">
+      <div class="toggle-thumb" [ngClass]="{'active': isLightTheme}"></div>
     </div>
   </div>
 

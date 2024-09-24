@@ -10,13 +10,16 @@ import * as THREE from 'three';
   providedIn: 'root',
 })
 export class RendererService {
+  public sceneService: SceneService; // Сделаем свойство публичным
+
   constructor(
-    private sceneService: SceneService,
+    sceneService: SceneService,
     private modelService: ModelService,
     private environmentService: EnvironmentService,
     private textureService: TextureService,
     private tabsService: TabsService
   ) {
+    this.sceneService = sceneService; // Инициализируем публичное свойство
     this.initialize();
   }
 

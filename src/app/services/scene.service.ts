@@ -122,28 +122,21 @@ export class SceneService {
     }
   }
 
-  private onThemeSwitch(): void {
+  public onThemeSwitch(): void {
     const bodyElement = document.body;
 
-    const themeSwitch = document.getElementById('theme-switch');
-    themeSwitch?.addEventListener('click', () => {
-      if (bodyElement.classList.contains('light-theme')) {
-        this.renderer.setClearColor(0x303030);
-        this.currentBackgroundColor = 0x303030;
-        bodyElement.classList.remove('light-theme');
-        bodyElement.classList.add('dark-theme');
-        this.outlinePass.visibleEdgeColor.set('#ffff00');
-        this.outlinePass.hiddenEdgeColor.set('#ffff00');
-      } else {
-        this.renderer.setClearColor(0xe3e3e3);
-        this.currentBackgroundColor = 0xe3e3e3;
-        bodyElement.classList.add('light-theme');
-        bodyElement.classList.remove('dark-theme');
-        this.outlinePass.visibleEdgeColor.set('#eda7a7');
-        this.outlinePass.hiddenEdgeColor.set('#eda7a7');
-      }
-      this.updateOutline();
-    });
+    if (bodyElement.classList.contains('light-theme')) {
+      this.renderer.setClearColor(0xe3e3e3); // Светлый фон
+      this.currentBackgroundColor = 0xe3e3e3;
+      this.outlinePass.visibleEdgeColor.set('#eda7a7');
+      this.outlinePass.hiddenEdgeColor.set('#eda7a7');
+    } else {
+      this.renderer.setClearColor(0x303030); // Темный фон
+      this.currentBackgroundColor = 0x303030;
+      this.outlinePass.visibleEdgeColor.set('#ffff00');
+      this.outlinePass.hiddenEdgeColor.set('#ffff00');
+    }
+    this.updateOutline();
   }
 
   private onWindowResize(): void {
