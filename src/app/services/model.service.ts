@@ -161,7 +161,7 @@ export class ModelService {
     }
   }
 
-  private async onModelUpload(event: Event): Promise<void> {
+  public async onModelUpload(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const files = input.files;
     if (files) {

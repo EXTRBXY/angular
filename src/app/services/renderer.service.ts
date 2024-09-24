@@ -11,10 +11,10 @@ import * as THREE from 'three';
 })
 export class RendererService {
   public sceneService: SceneService; // Сделаем свойство публичным
-
+  
   constructor(
     sceneService: SceneService,
-    private modelService: ModelService,
+    public modelService: ModelService,
     private environmentService: EnvironmentService,
     private textureService: TextureService,
     private tabsService: TabsService
