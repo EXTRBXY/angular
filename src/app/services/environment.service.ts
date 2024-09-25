@@ -7,54 +7,50 @@ import { SceneService } from './scene.service';
   providedIn: 'root',
 })
 export class EnvironmentService {
-  // Кэш для HDRI
   private hdriCache = new Map<string, THREE.Texture>();
+  private rgbeLoader = new RGBELoader();
 
   constructor(private sceneService: SceneService) {
-    const hdriSelect = document.getElementById(
-      'hdri-select'
-    ) as HTMLSelectElement;
-    hdriSelect?.addEventListener('change', (event) => {
-      const target = event.target as HTMLSelectElement;
-      this.updateEnvironment(target.value);
-    });
+    document
+      .getElementById('hdri-select')
+      ?.addEventListener('change', (event) => {
+        this.updateEnvironment((event.target as HTMLSelectElement).value);
+      });
   }
 
-  // Асинхронная функция обновления окружения
   async updateEnvironment(hdriName: string): Promise<void> {
     this.sceneService.showLoadingBar();
 
     if (hdriName === 'none') {
       this.sceneService.scene.environment = null;
-      this.sceneService.hideLoadingBar();
-      return;
-    }
-
-    try {
-      let texture: THREE.Texture;
-
-      if (this.hdriCache.has(hdriName)) {
-        console.log('HDRI загружена из кэша:', hdriName);
-        texture = this.hdriCache.get(hdriName)!;
-      } else {
-        const relativePath = `/assets/textures/equirectangular/${hdriName}`;
-        texture = await this.loadHDRI(relativePath);
-        this.hdriCache.set(hdriName, texture);
+    } else {
+      try {
+        const texture = await this.getHDRITexture(hdriName);
+        this.sceneService.scene.environment = texture;
+      } catch (error) {
+        console.error('Ошибка загрузки HDRI:', error);
+        alert('Ошибка загрузки HDRI. Проверьте формат файла и путь к нему.');
       }
-
-      this.sceneService.scene.environment = texture;
-    } catch (error) {
-      console.error('Ошибка загрузки HDRI:', error);
-      alert('Ошибка загрузки HDRI. Проверьте формат файла и путь к нему.');
-    } finally {
-      this.sceneService.hideLoadingBar();
     }
+
+    this.sceneService.hideLoadingBar();
   }
 
-  // Функция загрузки HDRI
+  private async getHDRITexture(hdriName: string): Promise<THREE.Texture> {
+    if (this.hdriCache.has(hdriName)) {
+      console.log('HDRI загружена из кэша:', hdriName);
+      return this.hdriCache.get(hdriName)!;
+    }
+
+    const relativePath = `/assets/textures/equirectangular/${hdriName}`;
+    const texture = await this.loadHDRI(relativePath);
+    this.hdriCache.set(hdriName, texture);
+    return texture;
+  }
+
   private loadHDRI(path: string): Promise<THREE.Texture> {
     return new Promise((resolve, reject) => {
-      new RGBELoader().load(
+      this.rgbeLoader.load(
         path,
         (texture) => {
           texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -62,13 +58,10 @@ export class EnvironmentService {
         },
         (xhr) => {
           if (xhr.lengthComputable) {
-            const percentComplete = (xhr.loaded / xhr.total) * 100;
-            this.sceneService.showLoadingBar(percentComplete);
+            this.sceneService.showLoadingBar((xhr.loaded / xhr.total) * 100);
           }
         },
-        (error) => {
-          reject(error);
-        }
+        reject
       );
     });
   }
