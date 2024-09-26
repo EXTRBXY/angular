@@ -5,7 +5,7 @@
 <aside id="gui-container">
   <div class="gui-group">
     <div id="theme-switch" (click)="toggleTheme()">
-      <div class="toggle-thumb" [ngClass]="{'active': isLightTheme}"></div>
+      <div class="toggle-thumb" [ngClass]="{ active: isLightTheme }"></div>
     </div>
   </div>
 
@@ -53,7 +53,13 @@
     <button id="upload-model-btn" aria-label="Загрузить модель" #uploadModelBtn>
       Загрузите модель
     </button>
-    <input type="file" id="model-upload" accept=".fbx" aria-hidden="true" #modelUploadInput />
+    <input
+      type="file"
+      id="model-upload"
+      accept=".fbx"
+      aria-hidden="true"
+      #modelUploadInput
+    />
   </div>
 
   <div class="gui-group">
@@ -73,7 +79,11 @@
     <div class="slider-container">
       <input
         type="range"
-        id="tiling-slider" min="1" max="10" value="1" #tilingSlider
+        id="tiling-slider"
+        min="1"
+        max="10"
+        value="1"
+        #tilingSlider
         aria-label="Изменить тайлинг"
       />
       <span id="tiling-value" aria-label="Значение тайлинга">1</span>

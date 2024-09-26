@@ -25,17 +25,19 @@ export class RendererService {
   private initialize(): void {
     this.sceneService.initScene();
     this.tabsService.initTabs();
-    (window as any).switchModel = this.modelService.switchModel.bind(this.modelService);
+    (window as any).switchModel = this.modelService.switchModel.bind(
+      this.modelService
+    );
     this.animate();
-    
-    this.domService.getTextureSelectObservable().subscribe(textureName => {
+
+    this.domService.getTextureSelectObservable().subscribe((textureName) => {
       const selectedObject = this.modelService.getSelectedObject();
       if (selectedObject) {
         this.textureService.updateTexture(textureName, selectedObject);
       } else {
         // Применяем текстуру ко всей модели
-        this.modelService.getModels().forEach(model => {
-          model.traverse(child => {
+        this.modelService.getModels().forEach((model) => {
+          model.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               this.textureService.updateTexture(textureName, child);
             }
@@ -44,14 +46,14 @@ export class RendererService {
       }
     });
 
-    this.domService.getTilingObservable().subscribe(tiling => {
+    this.domService.getTilingObservable().subscribe((tiling) => {
       const selectedObject = this.modelService.getSelectedObject();
       if (selectedObject) {
         this.textureService.updateTiling(tiling, selectedObject);
       } else {
         // Применяем тайлинг ко всей модели
-        this.modelService.getModels().forEach(model => {
-          model.traverse(child => {
+        this.modelService.getModels().forEach((model) => {
+          model.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               this.textureService.updateTiling(tiling, child);
             }
