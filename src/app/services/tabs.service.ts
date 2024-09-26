@@ -84,7 +84,6 @@ export class TabsService {
   }
 
   public initTabs(): void {
-    // Инициализация начальных вкладок, если необходимо
   }
 
   private handleContextMenu(

@@ -1,4 +1,3 @@
-// src/app/services/dom.service.ts
 import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 

@@ -35,7 +35,6 @@ export class RendererService {
       if (selectedObject) {
         this.textureService.updateTexture(textureName, selectedObject);
       } else {
-        // Применяем текстуру ко всей модели
         this.modelService.getModels().forEach((model) => {
           model.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -51,7 +50,6 @@ export class RendererService {
       if (selectedObject) {
         this.textureService.updateTiling(tiling, selectedObject);
       } else {
-        // Применяем тайлинг ко всей модели
         this.modelService.getModels().forEach((model) => {
           model.traverse((child) => {
             if (child instanceof THREE.Mesh) {

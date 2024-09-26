@@ -481,8 +481,6 @@ export class ModelService {
     this.textureService.updateTexture(currentTextureName, mesh);
   }
 
-  // Экспортируемые функции и переменные
-
   getModels(): THREE.Group[] {
     return this.models;
   }

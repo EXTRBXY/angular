@@ -27,7 +27,6 @@ export class EnvironmentService {
       this.sceneService.scene.environment = null;
       this.sceneService.hideLoadingBar();
     } else {
-      // Убрали обработку ошибок
       const texture = await this.getHDRITexture(hdriName);
       this.sceneService.scene.environment = texture;
       this.sceneService.hideLoadingBar();
@@ -36,7 +35,6 @@ export class EnvironmentService {
 
   private async getHDRITexture(hdriName: string): Promise<THREE.Texture> {
     if (this.hdriCache.has(hdriName)) {
-      console.log('HDRI загружена из кэша:', hdriName);
       return this.hdriCache.get(hdriName)!;
     }
 
@@ -55,8 +53,7 @@ export class EnvironmentService {
           }
         },
         () => {
-          // Убрали обработку ошибок
-          resolve(new THREE.Texture()); // Возвращаем пустую текстуру в случае ошибки
+          resolve(new THREE.Texture());
         }
       );
     });

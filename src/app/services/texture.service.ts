@@ -1,4 +1,3 @@
-// src/app/services/texture.service.ts
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { SceneService } from './scene.service';
@@ -29,16 +28,11 @@ export class TextureService {
 
   private initEventListeners(): void {
     this.domService.getTextureSelectObservable().subscribe((textureName) => {
-      this.updateTexture(textureName, null); // Здесь null нужно заменить на актуальный выбранный объект
+      this.updateTexture(textureName, null);
     });
 
     this.domService.getTilingObservable().subscribe((tiling) => {
-      // console.warn('Передайте выбранный объект модели при вызове updateTiling');
-      // this.updateTiling(tiling, selectedObject);
     });
-
-    // Добавьте слушатель для загрузки предопределённых текстур
-    // Если у вас есть метод для загрузки предопределённых текстур, убедитесь, что они устанавливают textureName
   }
 
   private onTextureUpload(event: Event): void {
@@ -100,7 +94,6 @@ export class TextureService {
         (await this.loadTextureWithProgress(texturePath));
       if (!this.textureCache.has(textureName)) {
         this.textureCache.set(textureName, texture);
-        // Устанавливаем название текстуры для предопределённых текстур
         texture.userData['textureName'] = textureName;
       }
       this.applyTexture(texture, object);
@@ -129,7 +122,6 @@ export class TextureService {
           reader.onload = () => {
             if (typeof reader.result === 'string') {
               const texture = this.textureLoader.load(reader.result);
-              // Устанавливаем название текстуры для предопределённых текстур
               texture.userData['textureName'] =
                 path.split('/').pop()?.replace('.png', '') || 'default';
               resolve(texture);
