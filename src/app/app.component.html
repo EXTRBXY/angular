@@ -11,7 +11,7 @@
 
   <nav class="gui-group">
     <label for="texture-select" style="font-weight: bold">Текстура</label>
-    <select id="texture-select" aria-label="Выбор текстуры">
+    <select id="texture-select" #textureSelect aria-label="Выбор текстуры">
       <option value="default">default</option>
       <option value="concrete_color">concrete_color</option>
       <option value="concrete_rough">concrete_rough</option>
@@ -73,10 +73,7 @@
     <div class="slider-container">
       <input
         type="range"
-        id="tiling-slider"
-        min="1"
-        max="10"
-        value="1"
+        id="tiling-slider" min="1" max="10" value="1" #tilingSlider
         aria-label="Изменить тайлинг"
       />
       <span id="tiling-value" aria-label="Значение тайлинга">1</span>

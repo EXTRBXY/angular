@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { DomService } from './services/dom.service';
 import { RendererService } from './services/renderer.service';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  imports: [NgClass],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
@@ -17,7 +18,13 @@ export class AppComponent implements OnInit {
   @ViewChild('modelUploadInput', { static: true })
   modelUploadInput!: ElementRef<HTMLInputElement>;
 
-  constructor(private rendererService: RendererService) {}
+  @ViewChild('textureSelect') textureSelect!: ElementRef<HTMLSelectElement>;
+  @ViewChild('tilingSlider') tilingSlider!: ElementRef<HTMLInputElement>;
+
+  constructor(
+    private domService: DomService,
+    private rendererService: RendererService
+  ) {}
 
   ngOnInit(): void {
     // Применяем тему при загрузке страницы
@@ -32,6 +39,18 @@ export class AppComponent implements OnInit {
 
     this.modelUploadInput.nativeElement.addEventListener('change', (event) => {
       this.rendererService.modelService.onModelUpload(event);
+    });
+  }
+
+  ngAfterViewInit() {
+    this.textureSelect.nativeElement.addEventListener('change', (event) => {
+      const selectedTexture = (event.target as HTMLSelectElement).value;
+      this.domService.updateTextureSelect(selectedTexture);
+    });
+
+    this.tilingSlider.nativeElement.addEventListener('input', (event) => {
+      const tiling = parseFloat((event.target as HTMLInputElement).value);
+      this.domService.updateTiling(tiling);
     });
   }
 

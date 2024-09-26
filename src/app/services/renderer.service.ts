@@ -5,6 +5,7 @@ import { EnvironmentService } from './environment.service';
 import { TextureService } from './texture.service';
 import { TabsService } from './tabs.service';
 import * as THREE from 'three';
+import { DomService } from './dom.service';
 
 @Injectable({
   providedIn: 'root',
@@ -15,7 +16,8 @@ export class RendererService {
     public modelService: ModelService,
     private environmentService: EnvironmentService,
     private textureService: TextureService,
-    private tabsService: TabsService
+    private tabsService: TabsService,
+    private domService: DomService
   ) {
     this.initialize();
   }
@@ -25,6 +27,38 @@ export class RendererService {
     this.tabsService.initTabs();
     (window as any).switchModel = this.modelService.switchModel.bind(this.modelService);
     this.animate();
+    
+    this.domService.getTextureSelectObservable().subscribe(textureName => {
+      const selectedObject = this.modelService.getSelectedObject();
+      if (selectedObject) {
+        this.textureService.updateTexture(textureName, selectedObject);
+      } else {
+        // Применяем текстуру ко всей модели
+        this.modelService.getModels().forEach(model => {
+          model.traverse(child => {
+            if (child instanceof THREE.Mesh) {
+              this.textureService.updateTexture(textureName, child);
+            }
+          });
+        });
+      }
+    });
+
+    this.domService.getTilingObservable().subscribe(tiling => {
+      const selectedObject = this.modelService.getSelectedObject();
+      if (selectedObject) {
+        this.textureService.updateTiling(tiling, selectedObject);
+      } else {
+        // Применяем тайлинг ко всей модели
+        this.modelService.getModels().forEach(model => {
+          model.traverse(child => {
+            if (child instanceof THREE.Mesh) {
+              this.textureService.updateTiling(tiling, child);
+            }
+          });
+        });
+      }
+    });
   }
 
   private animate = (): void => {
@@ -33,7 +67,12 @@ export class RendererService {
     this.sceneService.composer.render();
   };
   updateTexture = async (textureName: string): Promise<void> => {
-    await this.textureService.updateTexture(textureName, this.modelService.getSelectedObject());
+    const selectedObject = this.modelService.getSelectedObject();
+    if (selectedObject) {
+      await this.textureService.updateTexture(textureName, selectedObject);
+    } else {
+      console.warn('Не выбран объект для применения текстуры');
+    }
   };
 
   applyTexture = (texture: THREE.Texture, object: THREE.Object3D): void => {

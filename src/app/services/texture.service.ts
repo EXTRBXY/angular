@@ -2,6 +2,7 @@
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { SceneService } from './scene.service';
+import { DomService } from './dom.service';
 
 type UploadedTextures = { [key: string]: THREE.Texture };
 
@@ -16,26 +17,25 @@ export class TextureService {
   private textureCache = new Map<string, THREE.Texture>();
   private componentTiling = new Map<string, number>();
 
-  constructor(private sceneService: SceneService) {
+  constructor(
+    private sceneService: SceneService,
+    private domService: DomService
+  ) {
     this.initEventListeners();
   }
 
   private initEventListeners(): void {
-    const textureSelect = document.getElementById('texture-select') as HTMLSelectElement;
-    const uploadTextureBtn = document.getElementById('upload-texture-btn') as HTMLButtonElement;
-    const textureUploadInput = document.getElementById('texture-upload') as HTMLInputElement;
-    const tilingSlider = document.getElementById('tiling-slider') as HTMLInputElement;
-    const tilingValue = document.getElementById('tiling-value');
-
-    textureSelect?.addEventListener('change', () => console.warn('Передайте выбранный объект модели при вызове updateTexture'));
-    uploadTextureBtn?.addEventListener('click', () => textureUploadInput?.click());
-    textureUploadInput?.addEventListener('change', (event) => this.onTextureUpload(event));
-    tilingSlider?.addEventListener('input', (event) => {
-      const tiling = parseFloat((event.target as HTMLInputElement).value);
-      console.warn('Передайте выбранный объект модели при вызове updateTiling');
+    this.domService.getTextureSelectObservable().subscribe(textureName => {
+      this.updateTexture(textureName, null); // Здесь null нужно заменить на актуальный выбранный объект
     });
 
-    if (tilingValue) tilingValue.textContent = '1';
+    this.domService.getTilingObservable().subscribe(tiling => {
+      console.warn('Передайте выбранный объект модели при вызове updateTiling');
+      // this.updateTiling(tiling, selectedObject);
+    });
+
+    // Добавьте слушатель для загрузки предопределённых текстур
+    // Если у вас есть метод для загрузки предопределённых текстур, убедитесь, что они устанавливают textureName
   }
 
   private onTextureUpload(event: Event): void {
@@ -81,11 +81,15 @@ export class TextureService {
 
   private async loadAndApplyTexture(textureName: string, object: THREE.Object3D): Promise<void> {
     this.sceneService.showLoadingBar();
-    const texturePath = `assets/textures/${textureName}.png`;
+    const texturePath = `/assets/textures/${textureName}.png`;
 
     try {
       const texture = this.textureCache.get(textureName) || await this.loadTextureWithProgress(texturePath);
-      if (!this.textureCache.has(textureName)) this.textureCache.set(textureName, texture);
+      if (!this.textureCache.has(textureName)) {
+        this.textureCache.set(textureName, texture);
+        // Устанавливаем название текстуры для предопределённых текстур
+        texture.userData['textureName'] = textureName;
+      }
       this.applyTexture(texture, object);
     } catch (error) {
       console.error('Ошибка загрузки текстуры:', error);
@@ -111,7 +115,10 @@ export class TextureService {
           const reader = new FileReader();
           reader.onload = () => {
             if (typeof reader.result === 'string') {
-              resolve(this.textureLoader.load(reader.result));
+              const texture = this.textureLoader.load(reader.result);
+              // Устанавливаем название текстуры для предопределённых текстур
+              texture.userData['textureName'] = path.split('/').pop()?.replace('.png', '') || 'default';
+              resolve(texture);
             } else {
               reject(new Error('Некорректный формат текстуры'));
             }
@@ -136,7 +143,8 @@ export class TextureService {
         }
 
         this.applyTextureToMaterial(child.material, texture);
-        this.componentTextures.set(child.uuid, texture.userData['textureName'] || '');
+        const textureName = texture.userData['textureName'] || 'default';
+        this.componentTextures.set(child.uuid, textureName);
         this.updateTiling(this.getObjectTiling(child), child);
       }
     });
