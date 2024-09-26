@@ -30,7 +30,7 @@ export class TextureService {
     });
 
     this.domService.getTilingObservable().subscribe(tiling => {
-      console.warn('Передайте выбранный объект модели при вызове updateTiling');
+      // console.warn('Передайте выбранный объект модели при вызове updateTiling');
       // this.updateTiling(tiling, selectedObject);
     });
 

@@ -20,6 +20,7 @@ export class AppComponent implements OnInit {
 
   @ViewChild('textureSelect') textureSelect!: ElementRef<HTMLSelectElement>;
   @ViewChild('tilingSlider') tilingSlider!: ElementRef<HTMLInputElement>;
+  @ViewChild('hdriSelect') hdriSelect!: ElementRef<HTMLSelectElement>;
 
   constructor(
     private domService: DomService,
@@ -51,6 +52,11 @@ export class AppComponent implements OnInit {
     this.tilingSlider.nativeElement.addEventListener('input', (event) => {
       const tiling = parseFloat((event.target as HTMLInputElement).value);
       this.domService.updateTiling(tiling);
+    });
+
+    this.hdriSelect.nativeElement.addEventListener('change', (event) => {
+      const selectedHdri = (event.target as HTMLSelectElement).value;
+      this.domService.updateHdriSelect(selectedHdri);
     });
   }
 

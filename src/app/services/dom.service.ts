@@ -8,6 +8,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export class DomService {
   private textureSelectSubject = new BehaviorSubject<string>('');
   private tilingSubject = new BehaviorSubject<number>(1);
+  private hdriSelectSubject = new BehaviorSubject<string>('');
 
   constructor(private ngZone: NgZone) {}
 
@@ -19,6 +20,10 @@ export class DomService {
     return this.tilingSubject.asObservable();
   }
 
+  getHdriSelectObservable(): Observable<string> {
+    return this.hdriSelectSubject.asObservable();
+  }
+
   updateTextureSelect(value: string): void {
     this.ngZone.run(() => {
       this.textureSelectSubject.next(value);
@@ -28,6 +33,12 @@ export class DomService {
   updateTiling(value: number): void {
     this.ngZone.run(() => {
       this.tilingSubject.next(value);
+    });
+  }
+
+  updateHdriSelect(value: string): void {
+    this.ngZone.run(() => {
+      this.hdriSelectSubject.next(value);
     });
   }
 }
